@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewsletterForm } from "@/components/newsletter-form"
+import { getLatestPosts } from "@/lib/posts"
 import { Inter } from "next/font/google"
 
 // Add Host Grotesk font
@@ -23,8 +24,14 @@ export default function Component() {
   const [showCursor, setShowCursor] = useState(true)
   const [cursorDisappearing, setCursorDisappearing] = useState(false)
   const [typingComplete, setTypingComplete] = useState(false)
+  const [latestPosts, setLatestPosts] = useState<any[]>([])
 
   const fullText = "Curious minds find signals in stillness."
+
+  // Get latest posts for homepage
+  useEffect(() => {
+    setLatestPosts(getLatestPosts(2))
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -353,85 +360,79 @@ export default function Component() {
               </Button>
             </div>
 
-            {/* Blog Previews Grid - 2 Posts */}
+            {/* Blog Previews Grid - Latest 2 Posts */}
             <div className="grid md:grid-cols-2 gap-8">
-              {/* First Blog Post */}
-              <article className="group cursor-pointer">
-                <a href="/blog/1" className="block">
-                  {/* Blog Image */}
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
-                    <Image
-                      src="/placeholder.svg?height=300&width=500"
-                      alt="Telescope pointing towards a starry night sky"
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
-                  </div>
-
-                  {/* Blog Content */}
-                  <div className="space-y-3">
-                    <div
-                      className="text-sm text-gray-600 uppercase tracking-wide"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      March 15, 2024
+              {latestPosts.map((post, index) => (
+                <article key={post.id} className="group cursor-pointer">
+                  <a href={`/blog/${post.id}`} className="block">
+                    {/* Blog Image */}
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
+                      <Image
+                        src={post.image || "/placeholder.svg"}
+                        alt={post.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
                     </div>
-                    <h3
-                      className="text-xl md:text-2xl font-light leading-tight group-hover:text-gray-700 transition-colors duration-300"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      The Art of Finding Meaning in the Cosmos
-                    </h3>
-                    <p
-                      className="text-sm text-gray-700 leading-relaxed"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      Exploring how ancient wisdom and modern science converge in our quest to understand the universe
-                      and our place within it. In the vast expanse of the cosmos...
-                    </p>
-                  </div>
-                </a>
-              </article>
 
-              {/* Second Blog Post */}
-              <article className="group cursor-pointer">
-                <a href="/blog/2" className="block">
-                  {/* Blog Image */}
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
-                    <Image
-                      src="/placeholder.svg?height=300&width=500"
-                      alt="Data visualization with cosmic background"
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
-                  </div>
-
-                  {/* Blog Content */}
-                  <div className="space-y-3">
-                    <div
-                      className="text-sm text-gray-600 uppercase tracking-wide"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      March 8, 2024
+                    {/* Blog Content */}
+                    <div className="space-y-3">
+                      <div
+                        className="text-sm text-gray-600 uppercase tracking-wide"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        {post.date}
+                      </div>
+                      <h3
+                        className="text-xl md:text-2xl font-light leading-tight group-hover:text-gray-700 transition-colors duration-300"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        {post.title}
+                      </h3>
+                      <p
+                        className="text-sm text-gray-700 leading-relaxed"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        {post.excerpt}
+                      </p>
                     </div>
-                    <h3
-                      className="text-xl md:text-2xl font-light leading-tight group-hover:text-gray-700 transition-colors duration-300"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      Signals in the Noise: A Data Scientist's Journey
-                    </h3>
-                    <p
-                      className="text-sm text-gray-700 leading-relaxed"
-                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                    >
-                      From financial markets to cosmic phenomena, the art of finding meaningful patterns in seemingly
-                      random data. Every dataset tells a story waiting to be discovered...
-                    </p>
+                  </a>
+                </article>
+              ))}
+
+              {/* If only one post exists, show a placeholder for the second */}
+              {latestPosts.length === 1 && (
+                <article className="group cursor-pointer opacity-50">
+                  <div className="block">
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-200 flex items-center justify-center">
+                      <p className="text-gray-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                        Next post coming soon...
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      <div
+                        className="text-sm text-gray-400 uppercase tracking-wide"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        Coming Soon
+                      </div>
+                      <h3
+                        className="text-xl md:text-2xl font-light leading-tight text-gray-400"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        Your Next Deep Dive
+                      </h3>
+                      <p
+                        className="text-sm text-gray-400 leading-relaxed"
+                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                      >
+                        Stay tuned for more explorations into the unknown...
+                      </p>
+                    </div>
                   </div>
-                </a>
-              </article>
+                </article>
+              )}
             </div>
           </div>
         </section>
@@ -536,3 +537,4 @@ export default function Component() {
     </div>
   )
 }
+
