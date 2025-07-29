@@ -10,52 +10,9 @@ export interface BlogPost {
   image: string
 }
 
-// Your posts will be stored here
+// Your posts will be stored here - I've removed the sample posts
 const posts: BlogPost[] = [
-  {
-    id: 1,
-    title: "The Art of Finding Meaning in the Cosmos",
-    excerpt:
-      "Exploring how ancient wisdom and modern science converge in our quest to understand the universe and our place within it...",
-    content: "Full blog content goes here. You can write as much as you want...",
-    date: "March 15, 2024",
-    readTime: "8 min read",
-    image: "/placeholder.svg?height=250&width=400",
-    category: "Philosophy",
-  },
-  {
-    id: 2,
-    title: "Signals in the Noise: A Data Scientist's Journey",
-    excerpt:
-      "From financial markets to cosmic phenomena, the art of finding meaningful patterns in seemingly random data...",
-    content: "Full blog content goes here...",
-    date: "March 8, 2024",
-    readTime: "12 min read",
-    image: "/placeholder.svg?height=250&width=400",
-    category: "Research",
-  },
-  {
-    id: 3,
-    title: "The Grey Areas of Financial Innovation",
-    excerpt:
-      "Navigating the complex intersection of traditional finance and emerging technologies. An analysis of regulatory frameworks...",
-    content: "Full blog content goes here...",
-    date: "February 28, 2024",
-    readTime: "10 min read",
-    image: "/placeholder.svg?height=250&width=400",
-    category: "Finance",
-  },
-  {
-    id: 4,
-    title: "Contemplating Consciousness in the Digital Age",
-    excerpt:
-      "As artificial intelligence advances, we must grapple with fundamental questions about consciousness and awareness...",
-    content: "Full blog content goes here...",
-    date: "February 20, 2024",
-    readTime: "15 min read",
-    image: "/placeholder.svg?height=250&width=400",
-    category: "Philosophy",
-  },
+  // Empty array - no default posts!
 ]
 
 export function getAllPosts(): BlogPost[] {
