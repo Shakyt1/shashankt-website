@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewsletterForm } from "@/components/newsletter-form"
-import { getLatestPosts } from "@/lib/posts"
+import { getLatestPosts, type BlogPost } from "@/lib/posts"
 import { Inter } from "next/font/google"
 
 // Add Host Grotesk font
@@ -24,13 +24,30 @@ export default function Component() {
   const [showCursor, setShowCursor] = useState(true)
   const [cursorDisappearing, setCursorDisappearing] = useState(false)
   const [typingComplete, setTypingComplete] = useState(false)
-  const [latestPosts, setLatestPosts] = useState<any[]>([])
+  const [latestPosts, setLatestPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fullText = "Curious minds find signals in stillness."
 
-  // Get latest posts for homepage
+  // Get latest posts from Supabase
   useEffect(() => {
-    setLatestPosts(getLatestPosts(2))
+    async function fetchLatestPosts() {
+      try {
+        setError(null)
+        const posts = await getLatestPosts(2)
+        setLatestPosts(posts)
+      } catch (error) {
+        console.error("Error fetching posts:", error)
+        setError("Unable to load posts. Please check your database setup.")
+        // Fallback to empty array
+        setLatestPosts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLatestPosts()
   }, [])
 
   useEffect(() => {
@@ -362,76 +379,131 @@ export default function Component() {
 
             {/* Blog Previews Grid - Latest 2 Posts */}
             <div className="grid md:grid-cols-2 gap-8">
-              {latestPosts.map((post, index) => (
-                <article key={post.id} className="group cursor-pointer">
-                  <a href={`/blog/${post.id}`} className="block">
-                    {/* Blog Image */}
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
-                      <Image
-                        src={post.image || "/placeholder.svg"}
-                        alt={post.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
-                    </div>
-
-                    {/* Blog Content */}
+              {loading ? (
+                // Loading state
+                <>
+                  <div className="animate-pulse">
+                    <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
                     <div className="space-y-3">
-                      <div
-                        className="text-sm text-gray-600 uppercase tracking-wide"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        {post.date}
-                      </div>
-                      <h3
-                        className="text-xl md:text-2xl font-light leading-tight group-hover:text-gray-700 transition-colors duration-300"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        {post.title}
-                      </h3>
-                      <p
-                        className="text-sm text-gray-700 leading-relaxed"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        {post.excerpt}
-                      </p>
-                    </div>
-                  </a>
-                </article>
-              ))}
-
-              {/* If only one post exists, show a placeholder for the second */}
-              {latestPosts.length === 1 && (
-                <article className="group cursor-pointer opacity-50">
-                  <div className="block">
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-200 flex items-center justify-center">
-                      <p className="text-gray-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
-                        Next post coming soon...
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      <div
-                        className="text-sm text-gray-400 uppercase tracking-wide"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        Coming Soon
-                      </div>
-                      <h3
-                        className="text-xl md:text-2xl font-light leading-tight text-gray-400"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        Your Next Deep Dive
-                      </h3>
-                      <p
-                        className="text-sm text-gray-400 leading-relaxed"
-                        style={{ fontFamily: "Host Grotesk, sans-serif" }}
-                      >
-                        Stay tuned for more explorations into the unknown...
-                      </p>
+                      <div className="bg-gray-200 h-4 w-24 rounded"></div>
+                      <div className="bg-gray-200 h-6 w-3/4 rounded"></div>
+                      <div className="bg-gray-200 h-4 w-full rounded"></div>
                     </div>
                   </div>
-                </article>
+                  <div className="animate-pulse">
+                    <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                    <div className="space-y-3">
+                      <div className="bg-gray-200 h-4 w-24 rounded"></div>
+                      <div className="bg-gray-200 h-6 w-3/4 rounded"></div>
+                      <div className="bg-gray-200 h-4 w-full rounded"></div>
+                    </div>
+                  </div>
+                </>
+              ) : error ? (
+                // Error state
+                <div className="col-span-2 text-center py-16">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                    <h3
+                      className="text-lg font-semibold text-red-800 mb-2"
+                      style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                    >
+                      Database Setup Required
+                    </h3>
+                    <p className="text-red-600 mb-4" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                      {error}
+                    </p>
+                    <p className="text-sm text-red-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                      Please run the SQL setup in your Supabase dashboard first.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {latestPosts.map((post) => (
+                    <article key={post.id} className="group cursor-pointer">
+                      <a href={`/blog/${post.id}`} className="block">
+                        {/* Blog Image */}
+                        <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
+                          <Image
+                            src={post.image || "/placeholder.svg"}
+                            alt={post.title}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
+                        </div>
+
+                        {/* Blog Content */}
+                        <div className="space-y-3">
+                          <div
+                            className="text-sm text-gray-600 uppercase tracking-wide"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            {new Date(post.date).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </div>
+                          <h3
+                            className="text-xl md:text-2xl font-light leading-tight group-hover:text-gray-700 transition-colors duration-300"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            {post.title}
+                          </h3>
+                          <p
+                            className="text-sm text-gray-700 leading-relaxed"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            {post.excerpt}
+                          </p>
+                        </div>
+                      </a>
+                    </article>
+                  ))}
+
+                  {/* If only one post exists, show a placeholder for the second */}
+                  {latestPosts.length === 1 && (
+                    <article className="group cursor-pointer opacity-50">
+                      <div className="block">
+                        <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-200 flex items-center justify-center">
+                          <p className="text-gray-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                            Next post coming soon...
+                          </p>
+                        </div>
+                        <div className="space-y-3">
+                          <div
+                            className="text-sm text-gray-400 uppercase tracking-wide"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            Coming Soon
+                          </div>
+                          <h3
+                            className="text-xl md:text-2xl font-light leading-tight text-gray-400"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            Your Next Deep Dive
+                          </h3>
+                          <p
+                            className="text-sm text-gray-400 leading-relaxed"
+                            style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                          >
+                            Stay tuned for more explorations into the unknown...
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  )}
+
+                  {/* If no posts exist */}
+                  {latestPosts.length === 0 && !error && (
+                    <div className="col-span-2 text-center py-16">
+                      <p className="text-gray-500 text-lg" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                        No posts found. Create your first post!
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
