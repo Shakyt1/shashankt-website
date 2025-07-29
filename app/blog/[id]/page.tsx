@@ -18,13 +18,30 @@ export default function BlogPostPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (params.id) {
-      const postId = Number.parseInt(params.id as string)
-      const foundPost = getPostById(postId)
-      setPost(foundPost || null)
+    async function fetchPost() {
+      if (params.id) {
+        try {
+          setError(null)
+          const postId = Number.parseInt(params.id as string)
+          const foundPost = await getPostById(postId)
+          setPost(foundPost)
+          if (!foundPost) {
+            setError("Post not found")
+          }
+        } catch (error) {
+          console.error("Error fetching post:", error)
+          setError("Unable to load post. Please try again.")
+        } finally {
+          setLoading(false)
+        }
+      }
     }
+
+    fetchPost()
   }, [params.id])
 
   useEffect(() => {
@@ -65,15 +82,30 @@ export default function BlogPostPage() {
 
   const headerIsWhite = isMenuOpen || isScrolled
 
-  if (!post) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-gray-600" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+            Loading post...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !post) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
-            Post Not Found
+            {error || "Post Not Found"}
           </h1>
           <p className="text-gray-600 mb-6" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
-            The blog post you're looking for doesn't exist.
+            {error === "Post not found"
+              ? "The blog post you're looking for doesn't exist."
+              : "There was an error loading the post. Please try again."}
           </p>
           <Button asChild className="bg-black text-white hover:bg-gray-800">
             <a href="/research" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
@@ -171,11 +203,17 @@ export default function BlogPostPage() {
               </span>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.date}</span>
+                <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                  {new Date(post.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.readTime}</span>
+                <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.read_time}</span>
               </div>
             </div>
 
@@ -191,9 +229,11 @@ export default function BlogPostPage() {
             <p className={`text-xl text-gray-600 leading-relaxed mb-8 ${manrope.className}`}>{post.excerpt}</p>
 
             {/* Featured Image */}
-            <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden mb-8">
-              <Image src={post.image || "/placeholder.svg"} alt={post.title} fill className="object-cover" priority />
-            </div>
+            {post.image && (
+              <div className="relative w-full h-64 md:h-96 rounded-lg overflow-hidden mb-8">
+                <Image src={post.image || "/placeholder.svg"} alt={post.title} fill className="object-cover" priority />
+              </div>
+            )}
           </header>
 
           {/* Post Content */}
@@ -222,7 +262,12 @@ export default function BlogPostPage() {
               </Button>
 
               <div className="text-sm text-gray-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
-                Published on {post.date}
+                Published on{" "}
+                {new Date(post.date).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </div>
             </div>
           </footer>
