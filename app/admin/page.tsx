@@ -21,7 +21,7 @@ export default function AdminPage() {
   })
 
   // Simple password - you can change this to whatever you want
-  const ADMIN_PASSWORD = "shashank2025"
+  const ADMIN_PASSWORD = "your_new_secure_password_here"
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
