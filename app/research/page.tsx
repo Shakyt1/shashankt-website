@@ -19,12 +19,28 @@ export default function ResearchPage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [posts, setPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Get unique categories from posts
   const categories = ["All", ...Array.from(new Set(posts.map((post) => post.category)))]
 
   useEffect(() => {
-    setPosts(getAllPosts())
+    async function fetchPosts() {
+      try {
+        setError(null)
+        const allPosts = await getAllPosts()
+        setPosts(allPosts)
+      } catch (error) {
+        console.error("Error fetching posts:", error)
+        setError("Unable to load posts. Please check your database setup.")
+        setPosts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPosts()
   }, [])
 
   useEffect(() => {
@@ -213,14 +229,46 @@ export default function ResearchPage() {
             {/* Results Count */}
             <div className="text-center mt-4">
               <p className="text-sm text-gray-500" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
-                {filteredPosts.length} {filteredPosts.length === 1 ? "post" : "posts"} found
+                {loading
+                  ? "Loading..."
+                  : `${filteredPosts.length} ${filteredPosts.length === 1 ? "post" : "posts"} found`}
               </p>
             </div>
           </div>
 
           {/* Blog Posts Grid */}
           <div className="py-8">
-            {filteredPosts.length > 0 ? (
+            {loading ? (
+              // Loading state
+              <div className="space-y-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="grid md:grid-cols-[1fr_1.5fr] gap-0 items-center animate-pulse">
+                    <div className="w-3/4 h-40 md:h-48 bg-gray-200 rounded"></div>
+                    <div className="space-y-2 p-4">
+                      <div className="bg-gray-200 h-4 w-24 rounded"></div>
+                      <div className="bg-gray-200 h-6 w-3/4 rounded"></div>
+                      <div className="bg-gray-200 h-4 w-full rounded"></div>
+                      <div className="bg-gray-200 h-4 w-20 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              // Error state
+              <div className="text-center py-16">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                  <h3
+                    className="text-lg font-semibold text-red-800 mb-2"
+                    style={{ fontFamily: "Host Grotesk, sans-serif" }}
+                  >
+                    Database Error
+                  </h3>
+                  <p className="text-red-600" style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                    {error}
+                  </p>
+                </div>
+              </div>
+            ) : filteredPosts.length > 0 ? (
               <div className="grid gap-6">
                 {filteredPosts.map((post) => (
                   <article key={post.id} className="grid md:grid-cols-[1fr_1.5fr] gap-0 items-center">
@@ -246,9 +294,15 @@ export default function ResearchPage() {
                         </span>
                         <div className="flex items-center gap-2">
                           <Calendar className="w-3 h-3" />
-                          <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.date}</span>
+                          <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>
+                            {new Date(post.date).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </span>
                         </div>
-                        <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.readTime}</span>
+                        <span style={{ fontFamily: "Host Grotesk, sans-serif" }}>{post.read_time}</span>
                       </div>
 
                       <a href={`/blog/${post.id}`}>
